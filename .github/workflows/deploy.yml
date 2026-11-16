@@ -1,0 +1,32 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: EC2_Secrets_For_Deployment
+    timeout-minutes: 25
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on EC2
+        run: |
+          ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=20 \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "NODE_OPTIONS=--max-old-space-size=768 bash /home/${{ secrets.EC2_USER }}/deploy.sh"

@@ -1,0 +1,67 @@
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPERADMIN
+  STAFF
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+
+model User {
+  id           String     @id @default(uuid())
+  email        String?    @unique
+  phone        String?    @unique
+  firstName    String?
+  lastName     String?
+  passwordHash String?
+  role         Role       @default(STAFF)
+  title        String?
+  status       UserStatus @default(ACTIVE)
+  isActive     Boolean    @default(true)
+  isDeleted    Boolean    @default(false)
+  tempAccessKey       String?
+  tempAccessExpiresAt DateTime?
+  createdAt   DateTime  @default(now())
+  createdBy   String?
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
+  lastLoginAt DateTime?
+
+  @@index([role])
+  @@index([status])
+  @@index([isDeleted])
+  @@map("users")
+}
+
+model Customer {
+  id        String  @id @default(uuid())
+  firstName String
+  lastName  String
+  phone     String?
+  email     String? @unique
+
+  isActive  Boolean @default(true)
+  isDeleted Boolean @default(false)
+
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([isDeleted])
+  @@map("customers")
+}
